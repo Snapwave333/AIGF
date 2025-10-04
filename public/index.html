@@ -1,0 +1,114 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Voice Agent Test UI</title>
+    <style>
+      body{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0;padding:24px;background:#0b0f19;color:#e6e8ee}
+      h1{font-weight:700}
+      .card{background:#111827;border:1px solid #243b53;border-radius:12px;padding:20px;margin-bottom:20px;box-shadow:0 10px 30px rgba(0,0,0,0.2)}
+      input,textarea,button,select{background:#0b1220;color:#e6e8ee;border:1px solid #243b53;border-radius:8px;padding:10px;margin:6px 0;width:100%}
+      button{cursor:pointer;background:#2563eb;border-color:#1e40af}
+      button:hover{background:#1d4ed8}
+      audio{width:100%;margin-top:10px}
+      .row{display:flex;gap:16px}
+      .row>.col{flex:1}
+      footer{opacity:.7;margin-top:30px;font-size:12px}
+    </style>
+  </head>
+  <body>
+    <h1>Local Voice Agent Tester</h1>
+    <div class="card">
+      <h2>LLM (Gemini) Test</h2>
+      <input id="sessionId" placeholder="Optional Session ID for memory" />
+      <textarea id="prompt" rows="4" placeholder="Enter prompt..."></textarea>
+      <button id="run-llm">Generate</button>
+      <pre id="llm-out"></pre>
+    </div>
+
+    <div class="card">
+      <h2>Sessions</h2>
+      <button id="list-sessions">List Recent Sessions</button>
+      <pre id="sessions-out"></pre>
+      <div class="row">
+        <div class="col">
+          <input id="session-view-id" placeholder="Session ID to view/end" />
+        </div>
+        <div class="col">
+          <button id="load-session-messages">Load Messages</button>
+        </div>
+        <div class="col">
+          <button id="end-session">End Session</button>
+        </div>
+      </div>
+      <pre id="messages-out"></pre>
+    </div>
+
+    <div class="card">
+      <h2>TTS (ElevenLabs) Test</h2>
+      <div class="row">
+        <div class="col">
+          <input id="tts-text" placeholder="Text to speak" />
+        </div>
+        <div class="col">
+          <input id="voice-id" placeholder="Voice ID (optional)" />
+        </div>
+      </div>
+      <button id="run-tts">Speak</button>
+      <audio id="audio" controls></audio>
+    </div>
+
+    <footer>
+      Make sure to set environment variables in .env: GEMINI_API_KEY and ELEVENLABS_API_KEY.
+    </footer>
+
+    <script>
+      document.getElementById('run-llm').addEventListener('click', async () => {
+        const prompt = document.getElementById('prompt').value
+        const sessionId = document.getElementById('sessionId').value
+        const res = await fetch('/api/llm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt, sessionId: sessionId || undefined }) })
+        const data = await res.json()
+        document.getElementById('llm-out').textContent = (data.text||data.error||'No response')
+      })
+
+      document.getElementById('run-tts').addEventListener('click', async () => {
+        const text = document.getElementById('tts-text').value
+        const voiceId = document.getElementById('voice-id').value
+        const res = await fetch('/api/tts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, voiceId }) })
+        if (!res.ok) {
+          const err = await res.text();
+          alert('TTS error: ' + err)
+          return
+        }
+        const blob = await res.blob()
+        const url = URL.createObjectURL(blob)
+        const audio = document.getElementById('audio')
+        audio.src = url
+        audio.play()
+      })
+
+      document.getElementById('list-sessions').addEventListener('click', async () => {
+        const res = await fetch('/api/sessions')
+        const data = await res.json()
+        document.getElementById('sessions-out').textContent = JSON.stringify(data, null, 2)
+      })
+
+      document.getElementById('load-session-messages').addEventListener('click', async () => {
+        const id = document.getElementById('session-view-id').value
+        if (!id) { alert('Enter session ID'); return }
+        const res = await fetch(`/api/sessions/${encodeURIComponent(id)}/messages`)
+        const data = await res.json()
+        document.getElementById('messages-out').textContent = JSON.stringify(data, null, 2)
+      })
+
+      document.getElementById('end-session').addEventListener('click', async () => {
+        const id = document.getElementById('session-view-id').value
+        if (!id) { alert('Enter session ID'); return }
+        const res = await fetch(`/api/sessions/${encodeURIComponent(id)}/end`, { method: 'POST' })
+        const data = await res.json()
+        alert(data.ok ? 'Session ended' : (data.error || 'Failed to end'))
+      })
+    </script>
+  </body>
+</html>
