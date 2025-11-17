@@ -1,0 +1,842 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Raven AI Assistant Dashboard</title>
+  <style>
+    :root {
+      --bg-primary: #0a0e17;
+      --bg-secondary: #111827;
+      --bg-tertiary: #1f2937;
+      --border-color: #374151;
+      --text-primary: #f3f4f6;
+      --text-secondary: #9ca3af;
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --raven-purple: #7c3aed;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--raven-purple);
+    }
+
+    .status-badge {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .status-online { background: var(--success); color: #000; }
+    .status-offline { background: var(--error); color: #fff; }
+    .status-partial { background: var(--warning); color: #000; }
+
+    .main-container {
+      display: grid;
+      grid-template-columns: 1fr 350px;
+      gap: 20px;
+      padding: 20px;
+      max-width: 1800px;
+      margin: 0 auto;
+    }
+
+    .chat-section {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 120px);
+    }
+
+    .chat-messages {
+      flex: 1;
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 20px;
+      overflow-y: auto;
+      margin-bottom: 16px;
+      border: 1px solid var(--border-color);
+    }
+
+    .message {
+      margin-bottom: 16px;
+      display: flex;
+      gap: 12px;
+    }
+
+    .message-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--bg-tertiary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    .message-user .message-avatar {
+      background: var(--accent);
+    }
+
+    .message-assistant .message-avatar {
+      background: var(--raven-purple);
+    }
+
+    .message-content {
+      background: var(--bg-tertiary);
+      padding: 12px 16px;
+      border-radius: 12px;
+      max-width: 80%;
+    }
+
+    .message-user .message-content {
+      background: var(--accent);
+    }
+
+    .message-meta {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .chat-input-area {
+      display: flex;
+      gap: 12px;
+    }
+
+    .chat-input {
+      flex: 1;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px 16px;
+      color: var(--text-primary);
+      font-size: 1rem;
+      resize: none;
+    }
+
+    .chat-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .send-btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 24px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .send-btn:hover {
+      background: var(--accent-hover);
+    }
+
+    .send-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .card-content {
+      font-size: 0.875rem;
+    }
+
+    .service-list {
+      list-style: none;
+    }
+
+    .service-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .service-item:last-child {
+      border-bottom: none;
+    }
+
+    .service-status {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 8px;
+    }
+
+    .status-good { background: var(--success); }
+    .status-bad { background: var(--error); }
+    .status-warn { background: var(--warning); }
+
+    .btn {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: all 0.2s;
+    }
+
+    .btn:hover {
+      background: var(--border-color);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-sm {
+      padding: 4px 12px;
+      font-size: 0.75rem;
+    }
+
+    .outfit-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .outfit-item {
+      background: var(--bg-tertiary);
+      padding: 8px;
+      border-radius: 6px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.75rem;
+    }
+
+    .outfit-item:hover {
+      background: var(--border-color);
+    }
+
+    .outfit-item.active {
+      border: 2px solid var(--raven-purple);
+    }
+
+    .expression-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .expression-btn {
+      padding: 4px 8px;
+      font-size: 0.7rem;
+    }
+
+    .tts-controls {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    select {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 0.875rem;
+    }
+
+    audio {
+      width: 100%;
+      margin-top: 12px;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border-color);
+      border-radius: 50%;
+      border-top-color: var(--accent);
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .tool-result {
+      background: var(--bg-primary);
+      padding: 8px;
+      border-radius: 6px;
+      margin-top: 8px;
+      font-size: 0.8rem;
+      font-family: monospace;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+
+    .typing-indicator {
+      display: flex;
+      gap: 4px;
+      padding: 12px 16px;
+    }
+
+    .typing-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--text-secondary);
+      border-radius: 50%;
+      animation: typing 1.4s infinite ease-in-out;
+    }
+
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes typing {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+
+    .google-auth {
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    @media (max-width: 1024px) {
+      .main-container {
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        order: -1;
+      }
+      .chat-section {
+        height: 60vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">
+      <h1>Raven AI Assistant</h1>
+      <span id="systemStatus" class="status-badge status-offline">Offline</span>
+    </div>
+    <div>
+      <button class="btn btn-sm" onclick="checkSystemStatus()">Refresh Status</button>
+    </div>
+  </div>
+
+  <div class="main-container">
+    <div class="chat-section">
+      <div id="chatMessages" class="chat-messages">
+        <div class="message message-assistant">
+          <div class="message-avatar">R</div>
+          <div>
+            <div class="message-content">
+              Oh. You're here. I suppose you need something. How... thrilling.
+            </div>
+            <div class="message-meta">Raven - Just now</div>
+          </div>
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <textarea id="chatInput" class="chat-input" placeholder="Type your message to Raven..." rows="2"></textarea>
+        <button id="sendBtn" class="send-btn" onclick="sendMessage()">Send</button>
+      </div>
+    </div>
+
+    <div class="sidebar">
+      <!-- Service Status -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Services</span>
+          <button class="btn btn-sm" onclick="checkSystemStatus()">Refresh</button>
+        </div>
+        <ul id="serviceList" class="service-list">
+          <li class="service-item">
+            <span><span class="service-status status-bad"></span>Ollama</span>
+            <span>Checking...</span>
+          </li>
+          <li class="service-item">
+            <span><span class="service-status status-bad"></span>Piper TTS</span>
+            <span>Checking...</span>
+          </li>
+          <li class="service-item">
+            <span><span class="service-status status-bad"></span>Google APIs</span>
+            <span>Checking...</span>
+          </li>
+          <li class="service-item">
+            <span><span class="service-status status-bad"></span>Avatar</span>
+            <span>Checking...</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Avatar Expression -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Avatar Expression</span>
+        </div>
+        <div class="expression-grid">
+          <button class="btn expression-btn" onclick="setExpression('neutral')">Neutral</button>
+          <button class="btn expression-btn" onclick="setExpression('indifferent')">Indifferent</button>
+          <button class="btn expression-btn" onclick="setExpression('annoyed')">Annoyed</button>
+          <button class="btn expression-btn" onclick="setExpression('bored')">Bored</button>
+          <button class="btn expression-btn" onclick="setExpression('sarcastic')">Sarcastic</button>
+          <button class="btn expression-btn" onclick="setExpression('reluctant')">Reluctant</button>
+        </div>
+        <div id="currentExpression" style="margin-top: 8px; font-size: 0.8rem; color: var(--text-secondary);">
+          Current: neutral
+        </div>
+      </div>
+
+      <!-- Wardrobe -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Wardrobe</span>
+          <button class="btn btn-sm" onclick="loadOutfits()">Refresh</button>
+        </div>
+        <div id="currentOutfit" style="margin-bottom: 8px; font-size: 0.8rem;">
+          Current: <span id="outfitName">None</span>
+        </div>
+        <div id="outfitGrid" class="outfit-grid">
+          <div class="outfit-item">No outfits found</div>
+        </div>
+      </div>
+
+      <!-- TTS Controls -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Text-to-Speech</span>
+        </div>
+        <select id="ttsProvider">
+          <option value="piper">Piper (Local)</option>
+          <option value="elevenlabs">ElevenLabs (Cloud)</option>
+        </select>
+        <div class="tts-controls">
+          <button class="btn" onclick="speakLastResponse()">Speak Last Response</button>
+        </div>
+        <audio id="ttsAudio" controls style="display: none;"></audio>
+      </div>
+
+      <!-- Google Integration -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Google Integration</span>
+        </div>
+        <div id="googleStatus" class="card-content">
+          <div class="google-auth">
+            <p style="margin-bottom: 12px; font-size: 0.8rem;">Connect Google services for calendar, email, and drive access.</p>
+            <button class="btn btn-primary" onclick="startGoogleAuth()">Authorize Google</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Session Info -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Session</span>
+        </div>
+        <div class="card-content" style="font-size: 0.8rem;">
+          <div>ID: <span id="sessionId" style="font-family: monospace;">-</span></div>
+          <div>Messages: <span id="messageCount">1</span></div>
+          <div style="margin-top: 8px;">
+            <button class="btn btn-sm" onclick="newSession()">New Session</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentSessionId = 'session_' + Date.now().toString(36);
+    let messageCount = 1;
+    let lastResponse = '';
+
+    document.getElementById('sessionId').textContent = currentSessionId.slice(0, 12) + '...';
+
+    // Send message on Enter (Shift+Enter for newline)
+    document.getElementById('chatInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    async function sendMessage() {
+      const input = document.getElementById('chatInput');
+      const message = input.value.trim();
+      if (!message) return;
+
+      const sendBtn = document.getElementById('sendBtn');
+      sendBtn.disabled = true;
+
+      // Add user message
+      addMessage('user', message);
+      input.value = '';
+      messageCount++;
+      updateMessageCount();
+
+      // Show typing indicator
+      showTypingIndicator();
+
+      try {
+        const response = await fetch('/api/raven/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message,
+            sessionId: currentSessionId
+          })
+        });
+
+        const data = await response.json();
+
+        hideTypingIndicator();
+
+        if (data.error) {
+          addMessage('assistant', data.ravenSays || 'Something went wrong. How unexpected.');
+        } else {
+          lastResponse = data.text;
+          addMessage('assistant', data.text, data.toolCalls);
+
+          // Update expression display
+          if (data.expression) {
+            document.getElementById('currentExpression').textContent = `Current: ${data.expression}`;
+          }
+        }
+
+        messageCount++;
+        updateMessageCount();
+      } catch (error) {
+        hideTypingIndicator();
+        addMessage('assistant', 'An error occurred. Even I am not perfect. Almost, but not quite.');
+        console.error('Chat error:', error);
+      }
+
+      sendBtn.disabled = false;
+    }
+
+    function addMessage(role, content, toolCalls = []) {
+      const messagesDiv = document.getElementById('chatMessages');
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message message-${role}`;
+
+      const avatar = role === 'user' ? 'U' : 'R';
+      const sender = role === 'user' ? 'You' : 'Raven';
+      const time = new Date().toLocaleTimeString();
+
+      let toolResultsHtml = '';
+      if (toolCalls.length > 0) {
+        toolResultsHtml = '<div class="tool-result">Tools used: ' + toolCalls.map(tc => tc.tool).join(', ') + '</div>';
+      }
+
+      messageDiv.innerHTML = `
+        <div class="message-avatar">${avatar}</div>
+        <div>
+          <div class="message-content">${escapeHtml(content)}</div>
+          ${toolResultsHtml}
+          <div class="message-meta">${sender} - ${time}</div>
+        </div>
+      `;
+
+      messagesDiv.appendChild(messageDiv);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function showTypingIndicator() {
+      const messagesDiv = document.getElementById('chatMessages');
+      const indicator = document.createElement('div');
+      indicator.id = 'typingIndicator';
+      indicator.className = 'message message-assistant';
+      indicator.innerHTML = `
+        <div class="message-avatar">R</div>
+        <div class="typing-indicator">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>
+      `;
+      messagesDiv.appendChild(indicator);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function hideTypingIndicator() {
+      const indicator = document.getElementById('typingIndicator');
+      if (indicator) indicator.remove();
+    }
+
+    function updateMessageCount() {
+      document.getElementById('messageCount').textContent = messageCount;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML.replace(/\n/g, '<br>');
+    }
+
+    async function checkSystemStatus() {
+      try {
+        const response = await fetch('/api/health');
+        const data = await response.json();
+
+        const statusBadge = document.getElementById('systemStatus');
+        const services = data.services;
+        const onlineCount = Object.values(services).filter(s => s === true || s).length;
+
+        if (onlineCount >= 4) {
+          statusBadge.className = 'status-badge status-online';
+          statusBadge.textContent = 'Online';
+        } else if (onlineCount > 0) {
+          statusBadge.className = 'status-badge status-partial';
+          statusBadge.textContent = 'Partial';
+        } else {
+          statusBadge.className = 'status-badge status-offline';
+          statusBadge.textContent = 'Offline';
+        }
+
+        // Update service list
+        const serviceList = document.getElementById('serviceList');
+        serviceList.innerHTML = `
+          <li class="service-item">
+            <span><span class="service-status ${services.ollama ? 'status-good' : 'status-bad'}"></span>Ollama</span>
+            <span>${services.ollama ? 'Ready' : 'Offline'}</span>
+          </li>
+          <li class="service-item">
+            <span><span class="service-status ${services.piperTTS ? 'status-good' : 'status-warn'}"></span>Piper TTS</span>
+            <span>${services.piperTTS ? 'Ready' : 'Not configured'}</span>
+          </li>
+          <li class="service-item">
+            <span><span class="service-status ${services.googleTools ? 'status-good' : 'status-warn'}"></span>Google APIs</span>
+            <span>${services.googleTools ? 'Connected' : 'Not authorized'}</span>
+          </li>
+          <li class="service-item">
+            <span><span class="service-status ${services.avatar ? 'status-good' : 'status-warn'}"></span>Avatar</span>
+            <span>${services.avatar ? 'Ready' : 'Setup needed'}</span>
+          </li>
+          <li class="service-item">
+            <span><span class="service-status ${services.database ? 'status-good' : 'status-bad'}"></span>Database</span>
+            <span>${services.database ? 'Connected' : 'Not configured'}</span>
+          </li>
+        `;
+      } catch (error) {
+        console.error('Status check failed:', error);
+      }
+    }
+
+    async function setExpression(expression) {
+      try {
+        const response = await fetch('/api/avatar/expression', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ expression })
+        });
+        const data = await response.json();
+        document.getElementById('currentExpression').textContent = `Current: ${data.expression}`;
+      } catch (error) {
+        console.error('Expression change failed:', error);
+      }
+    }
+
+    async function loadOutfits() {
+      try {
+        const response = await fetch('/api/wardrobe/outfits');
+        const data = await response.json();
+
+        const grid = document.getElementById('outfitGrid');
+
+        if (data.outfits.length === 0) {
+          grid.innerHTML = '<div class="outfit-item">No outfits in wardrobe. Add VRM files to assets/wardrobe/outfits/</div>';
+          return;
+        }
+
+        grid.innerHTML = data.outfits.map(outfit => `
+          <div class="outfit-item" onclick="changeOutfit('${outfit.name}')">
+            ${outfit.name}
+          </div>
+        `).join('');
+
+        // Get current outfit
+        const currentRes = await fetch('/api/wardrobe/current');
+        const currentData = await currentRes.json();
+        document.getElementById('outfitName').textContent = currentData.outfit || 'None';
+      } catch (error) {
+        console.error('Failed to load outfits:', error);
+      }
+    }
+
+    async function changeOutfit(name) {
+      try {
+        const response = await fetch('/api/wardrobe/change', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ outfit: name })
+        });
+        const data = await response.json();
+
+        if (data.success) {
+          document.getElementById('outfitName').textContent = name;
+          addMessage('assistant', data.message);
+        }
+      } catch (error) {
+        console.error('Outfit change failed:', error);
+      }
+    }
+
+    async function speakLastResponse() {
+      if (!lastResponse) {
+        alert('No response to speak yet.');
+        return;
+      }
+
+      const provider = document.getElementById('ttsProvider').value;
+      const endpoint = provider === 'piper' ? '/api/tts/piper' : '/api/tts/elevenlabs';
+
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: lastResponse })
+        });
+
+        if (!response.ok) {
+          const error = await response.text();
+          alert('TTS Error: ' + error);
+          return;
+        }
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const audio = document.getElementById('ttsAudio');
+        audio.style.display = 'block';
+        audio.src = url;
+        audio.play();
+      } catch (error) {
+        console.error('TTS failed:', error);
+        alert('TTS failed: ' + error.message);
+      }
+    }
+
+    async function startGoogleAuth() {
+      try {
+        const response = await fetch('/api/google/auth-url');
+        const data = await response.json();
+
+        if (data.url) {
+          const code = prompt('1. Visit this URL to authorize:\n\n' + data.url + '\n\n2. After authorizing, paste the code here:');
+
+          if (code) {
+            const authResponse = await fetch('/api/google/callback', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ code })
+            });
+
+            const authData = await authResponse.json();
+            if (authData.ok) {
+              alert('Google authorization successful!');
+              checkSystemStatus();
+            } else {
+              alert('Authorization failed: ' + (authData.error || 'Unknown error'));
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Google auth failed:', error);
+        alert('Failed to start Google authorization');
+      }
+    }
+
+    function newSession() {
+      currentSessionId = 'session_' + Date.now().toString(36);
+      document.getElementById('sessionId').textContent = currentSessionId.slice(0, 12) + '...';
+      document.getElementById('chatMessages').innerHTML = `
+        <div class="message message-assistant">
+          <div class="message-avatar">R</div>
+          <div>
+            <div class="message-content">Another session. How... wonderful. What do you need now.</div>
+            <div class="message-meta">Raven - Just now</div>
+          </div>
+        </div>
+      `;
+      messageCount = 1;
+      updateMessageCount();
+      lastResponse = '';
+    }
+
+    // Initialize on load
+    checkSystemStatus();
+    loadOutfits();
+    setInterval(checkSystemStatus, 60000); // Refresh status every minute
+  </script>
+</body>
+</html>

@@ -7,6 +7,7 @@ yarn-error.log*
 # Environment files
 .env
 .env.*
+!.env.example
 
 # Build outputs
 build/
@@ -20,3 +21,40 @@ logs/
 # Misc
 .DS_Store
 Thumbs.db
+*.swp
+*.swo
+*~
+
+# Raven AI Assistant specific
+
+# Credentials and tokens (sensitive)
+credentials/
+!credentials/.gitkeep
+
+# TTS voice models (large files)
+models/*.onnx
+models/*.json
+!models/.gitkeep
+
+# Avatar and wardrobe assets (user content)
+assets/avatars/*.vrm
+assets/wardrobe/outfits/*.vrm
+assets/wardrobe/accessories/*.vrm
+assets/wardrobe/accessories/*.gltf
+assets/wardrobe/accessories/*.glb
+assets/wardrobe/presets/config.json
+!assets/.gitkeep
+
+# Temporary files
+temp/
+!temp/.gitkeep
+
+# Audio output
+*.wav
+*.mp3
+*.ogg
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3

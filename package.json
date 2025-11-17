@@ -1,11 +1,14 @@
 {
-  "name": "voice-agent-pipeline",
-  "version": "0.1.0",
+  "name": "raven-ai-assistant",
+  "version": "1.0.0",
+  "description": "Raven AI Assistant - A full-stack embodied AI with VTuber avatar, local LLM, TTS, and Google integrations",
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "start": "node raven-server.js",
+    "dev": "node raven-server.js",
+    "start:legacy": "node server.js",
+    "setup": "node scripts/setup.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.16.0",
@@ -13,6 +16,20 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "googleapis": "^140.0.0",
     "node-fetch": "^3.3.2"
-  }
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "ai-assistant",
+    "vtuber",
+    "ollama",
+    "tts",
+    "google-apis",
+    "vrm"
+  ],
+  "author": "",
+  "license": "MIT"
 }
